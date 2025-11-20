@@ -82,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: title,
                         amount: salaryService.getFormattedSalaryForPeriod(startDate, endDate),
                         color: Colors.green,
+                        icon: Icons.paid,
                       );
                     },
                   ),
@@ -95,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: '当前总额',
                         amount: salaryService.getFormattedSalary(),
                         color: Colors.blue,
+                        icon: Icons.account_balance_wallet,
                       );
                     },
                   ),
@@ -132,8 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8.0),
+                      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(16.0),
                     ),
                     child: Column(
                       children: [

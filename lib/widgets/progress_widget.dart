@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class ProgressWidget extends StatelessWidget {
+class ProgressWidget extends StatefulWidget {
   final String title;
   final String progressText;
   final double progressValue;
@@ -11,22 +11,83 @@ class ProgressWidget extends StatelessWidget {
     required this.title,
     required this.progressText,
     required this.progressValue,
-    this.color = Colors.blue,
+    required this.color,
   });
 
   @override
+  State<ProgressWidget> createState() => _ProgressWidgetState();
+}
+
+class _ProgressWidgetState extends State<ProgressWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _progressAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _progressAnimation = Tween<double>(
+      begin: 0.0,
+      end: widget.progressValue,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void didUpdateWidget(ProgressWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.progressValue != widget.progressValue) {
+      _progressAnimation = Tween<double>(
+        begin: oldWidget.progressValue,
+        end: widget.progressValue,
+      ).animate(
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      );
+      _animationController.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  widget.color.withOpacity(0.25),
+                  widget.color.withOpacity(0.1),
+                ]
+              : [
+                  widget.color.withOpacity(0.12),
+                  widget.color.withOpacity(0.05),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: widget.color.withOpacity(0.3),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 8,
+            color: widget.color.withOpacity(0.15),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -34,27 +95,47 @@ class ProgressWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.grey[700],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: widget.color,
+                    ),
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  widget.progressText,
+                  key: ValueKey(widget.progressText),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: widget.color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: progressValue,
-            backgroundColor: Colors.grey[300],
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            borderRadius: BorderRadius.circular(10),
-            minHeight: 12,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            progressText,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
+          const SizedBox(height: 16),
+          AnimatedBuilder(
+            animation: _progressAnimation,
+            builder: (context, child) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  height: 16,
+                  child: LinearProgressIndicator(
+                    value: _progressAnimation.value,
+                    backgroundColor: isDark
+                        ? Colors.grey[800]
+                        : Colors.grey[300],
+                    valueColor: AlwaysStoppedAnimation<Color>(widget.color),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

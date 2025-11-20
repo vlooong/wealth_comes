@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">财富累积器</string>
+    <string name="widget_description">在桌面实时显示薪资累积情况</string>
+</resources>

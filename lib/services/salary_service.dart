@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/salary_model.dart';
@@ -29,23 +30,38 @@ class SalaryService extends ChangeNotifier {
     _calculateCurrentSalary();
   }
 
-  void _loadFromPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? savedData = prefs.getString('salaryModel');
-    if (savedData != null) {
-      // In a real implementation, we would parse the saved data
-      // For now, we'll just keep the default values
+  Future<void> _loadFromPreferences() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? savedData = prefs.getString('salaryModel');
+      if (savedData != null) {
+        // Parse the JSON string and create SalaryModel from it
+        final Map<String, dynamic> jsonData = json.decode(savedData);
+        _salaryModel = SalaryModel.fromJson(jsonData);
+        _startTimer();
+        notifyListeners();
+      }
+    } catch (e) {
+      // If there's an error loading, just use default values
+      print('Error loading preferences: $e');
     }
   }
 
-  void _saveToPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    // In a real implementation, we would save the data as JSON
+  Future<void> _saveToPreferences() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      // Convert the model to JSON and save it
+      final jsonData = _salaryModel.toJson();
+      final jsonString = json.encode(jsonData);
+      await prefs.setString('salaryModel', jsonString);
+    } catch (e) {
+      print('Error saving preferences: $e');
+    }
   }
 
-  void updateSalaryModel(SalaryModel newModel) {
+  Future<void> updateSalaryModel(SalaryModel newModel) async {
     _salaryModel = newModel;
-    _saveToPreferences();
+    await _saveToPreferences();
     _startTimer();
     notifyListeners();
   }
